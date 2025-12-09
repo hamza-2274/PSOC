@@ -1,0 +1,42 @@
+%[Ybuss]=Ybuss();
+%function [f] = SEFunc(V, delta,y,from_bus,to_bus,Ybuss)
+
+branches=length(from_bus); 
+Nbus=length(V);
+Ymag = abs(Ybuss);                 % magnitude
+Yang = angle(Ybuss) ;      % angle in radians
+f=zeros(3*Nbus+4*branches,1);
+%%% Bus Power Injunction
+Q = zeros(Nbus,1);
+P = zeros(Nbus,1);
+for i = 1:Nbus
+    for j = 1:Nbus
+        P(i) = P(i) + V(i)*V(j)*Ymag(i,j)*cos(Yang(i,j) - delta(i) + delta(j));
+        Q(i) = Q(i) - V(i)*V(j)*Ymag(i,j)*sin(Yang(i,j) - delta(i) + delta(j));
+    end
+end
+% Branch Power Flow
+V_complex = V .* exp(1j * delta);
+S=zeros(branches,1);
+S1=zeros(branches,1);
+for a=1:branches
+    i=from_bus(a);
+    j=to_bus(a);
+    S(a)=V_complex(i)*conj( y(a)* ( V_complex(i)-V_complex(j) ) );
+    S1(a)=V_complex(j)*conj( y(a)* ( V_complex(j)-V_complex(i) ) );
+end
+ P1=real(S);
+ Q1=imag(S);
+ P2=real(S1);
+ Q2=imag(S1);
+
+
+f(1:Nbus)=V;
+f(Nbus+1:2*Nbus)=P;
+f(2*Nbus+1:3*Nbus)=Q;
+f(3*Nbus+1:3*Nbus+branches)=P1;
+f(3*Nbus+branches+1:3*Nbus+2*branches)=P2;
+f(3* Nbus+2*branches+1:3*Nbus+3*branches)=Q1;
+f(3*Nbus+3*branches+1:3*Nbus+4*branches)=Q2;
+
+%end
